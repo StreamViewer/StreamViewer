@@ -106,7 +106,7 @@
             display: none;
         }
 
-        #bottom-menu button, #bottom-menu label {
+        #bottom-menu button {
             position: fixed;
             bottom: 2px;
             font-size: 18px;
@@ -123,6 +123,30 @@
 
         .btn:hover {
             border-color: #FFFFFF;
+        }
+
+        .layout-select {
+            position: absolute;
+            bottom: 0;
+            right: 50px;
+        }
+
+        .layout-select input {
+            opacity: 0.01;
+            z-index: 99;
+        }
+
+        .layout-selector {
+            color: #FFFFFF;
+            background-color: #404040;
+            border: solid 2px #404040;
+            border-radius: 5px;
+            font-size: 50px;
+        }
+
+        .layout-select input[type="radio"]:checked + .layout-selector {
+            background-color: #161616;
+            border-color: #161616;
         }
     </style>
 </head>
@@ -144,7 +168,13 @@
     </form>
 </div>
 <div id="bottom-menu">
-    <button class="btn" onclick="showAddMenu()">Add Player</button>
+    <button class="btn" onclick="showAddMenu('last')">Add Player</button>
+    <form class="layout-select">
+        <input type="radio" name="layout-select" id="layout-cascade" value="cascade" />
+        <label for="layout-cascade"><i class="material-icons layout-selector">&#xE8F0;</i></label>
+        <input type="radio" name="layout-select" id="layout-uniform" value="uniform" checked="checked" />
+        <label for="layout-uniform"><i class="material-icons layout-selector">&#xE8F1;</i></label>
+    </form>
 </div>
 <script id="main">
     "use strict";
@@ -152,10 +182,17 @@
     function showAddMenu(player) {
         var menu = document.getElementById("add-menu");
         if (player) {
-            menu.onsubmit = function() {
-                addPlayer(player);
-                return false;
-            };
+            if (player == "last") {
+                menu.onsubmit = function() {
+                    addPlayer();
+                    return false;
+                };
+            } else {
+                menu.onsubmit = function () {
+                    addPlayer(player);
+                    return false;
+                };
+            }
 
             menu.parentElement.onclick = function() {
                 if (event.target == menu.parentElement) {
@@ -223,14 +260,14 @@
             player.parentElement.insertBefore(div, player);
         }
 
-        resizeAll(document.getElementById("viewer"), "");
+        resizeAll(document.getElementById("viewer"));
 
         hideAddMenu();
     }
 
     function removePlayer(player) {
         player.parentNode.removeChild(player);
-        resizeAll(document.getElementById("viewer"), "");
+        resizeAll(document.getElementById("viewer"));
 
         if (document.getElementsByClassName("player").length == 0) {
             showAddMenu();
@@ -241,9 +278,19 @@
         player.firstChild.src = player.firstChild.src;
     }
 
-    function resizeAll(viewer, mode) {
+    function resizeAll(viewer) {
         const RATIO = 16 / 9;
         const ROOM = 45;
+
+        function getMode() {
+            var modes = document.getElementsByName("layout-select");
+
+            for (var i = 0, length = modes.length; i < length; i++) {
+                if (modes[i].checked) {
+                    return modes[i].value;
+                }
+            }
+        }
 
         function resizePlayer(player, x, y, width, height) {
             player.style.left = x + "px";
@@ -309,16 +356,74 @@
         }
 
         function uniformResize(players) {
+            var rows = players.length;
+            var cols = 1;
 
+            var width = window.innerWidth;
+            var height = window.innerHeight - ROOM;
+
+            function calcSize(w, h) {
+                if (h * RATIO > w) {
+                    return w * w * (1 / RATIO);
+                } else {
+                    return h * h * RATIO;
+                }
+            }
+
+            var eff = calcSize(width / cols, height / rows);
+
+            var newEff = 0;
+
+            do {
+                var newCols = cols + 1;
+                var newRows = Math.floor(players.length / newCols);
+
+                newEff = calcSize(width / newCols, height / newRows);
+
+                console.log("**********");
+                console.log("eff " + eff + ", " + newEff);
+                console.log("w " + (width / cols) + " h " + (height / rows));
+                console.log("nw " + (width / newCols) + " nh " + (height / newRows));
+                console.log("r " + rows + " c " + cols);
+                console.log("nr " + newRows + " nc " + newCols);
+
+                if (newEff > eff && newRows != 0 && newCols != 0) {
+                    rows = newRows;
+                    cols = newCols;
+                }
+            } while (newEff > eff && newRows != 0 && newCols != 0);
+
+            var w = Math.floor(width / cols);
+            var h = Math.floor(height / rows);
+
+            var x = 0;
+            var y = 0;
+
+            for (var i = 0; i < players.length; i++) {
+                resizePlayer(players[i], x * w, y * h, w, h);
+
+                x++;
+
+                if (x == cols) {
+                    x = 0;
+                    y++;
+                }
+            }
         }
 
         var players = viewer.childNodes;
 
-        cascadeResize(players);
+        var mode = getMode();
+
+        if (mode == "cascade") {
+            cascadeResize(players);
+        } else {
+            uniformResize(players);
+        }
     }
 
     window.onresize = function() {
-        resizeAll(document.getElementById("viewer"), "");
+        resizeAll(document.getElementById("viewer"));
     }
 </script>
 </body>

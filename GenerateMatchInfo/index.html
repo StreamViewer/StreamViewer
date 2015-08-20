@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Unikrn Generate Match Info</title>
+
+    <script type="text/javascript" src="../scripts/jspdf/jspdf.js"></script>
+    <script type="text/javascript" src="../scripts/jspdf/FileSaver.js"></script>
+
+    <style>
+        .bet-type {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="info">
+    <select id="type-select" class="type-select">
+        <option disabled selected> -- Select bet type -- </option>
+        <option value="h2h">Head to head</option>
+        <option value="outright">Outright</option>
+    </select>
+
+    <input type="text" id="tournament-name" placeholder="Enter tournament name" />
+
+    <div id="h2h" class="bet-type h2h">
+        <div id="h2h-data"></div>
+
+        <button class="add-series">Add Series</button>
+    </div>
+
+    <div id="outright" class="bet-type outright">
+        <input type="text" class="date" placeholder="Date" />
+        <input type="text" class="time-utc" placeholder="Time (UTC)" />
+
+        <div id="outright-data"></div>
+
+        <button class="add-team">Add Team</button>
+    </div>
+
+    <button class="generate-info">Generate</button>
+</div>
+<script src="../scripts/utils.js"></script>
+<script>
+    (function(doc, nav) {
+        function getSelectedType() {
+            var e = doc.getElementById('type-select');
+            var o = e.options;
+            return e.options[e.selectedIndex].value;
+        }
+
+        function createCSV(o) {
+            var csv = 'TOURNAMENT,DATE,TIME UTC,TYPE,TEAM,ODDS';
+
+            csv += "\n\n" + o.tournament;
+
+            for (var i = 0; i < o.data.length; i++) {
+                if (o.data[i].name) {
+                    csv += ',,,Outright' + o.data[i].name;
+                    csv += ',' + o.data[i].odds;
+                } else if (o.data[i].name1) {
+                    csv += ',,,H2H' + o.data[i].name1;
+                    csv += ',' + o.data[i].odds1;
+                    csv += '\n,,,' + o.data[i].name2;
+                    csv += ',' + o.data[i].odds2;
+                }
+
+                csv += "\n\n"
+            }
+
+            return csv;
+        }
+
+        function createPDF(o) {
+            var pdf = new jsPDF();
+
+            pdf.setFontSize(15);
+            pdf.setFontType('bold');
+
+            pdf.text(20, 30, 'TOURNAMENT');
+            pdf.text(60, 30, 'DATE');
+            pdf.text(83, 30, 'TIME (UTC)');
+            pdf.text(115, 30, 'TYPE');
+            pdf.text(135, 30, 'TEAM');
+            pdf.text(170, 30, 'ODDS');
+
+            pdf.setFontSize(12);
+            pdf.setFontType('normal');
+
+            var y = 40;
+
+            pdf.text(20, y, o.tournament);
+
+            if (o.date) {
+                pdf.text(60, y, o.date);
+                pdf.text(83, y, o.time);
+            }
+
+            for (var i = 0; i < o.data.length; i++) {
+                if (o.data[i].name) {
+                    pdf.text(115, y, 'Outright');
+                    pdf.text(135, y, o.data[i].name);
+                    pdf.text(170, y, o.data[i].odds);
+                } else if (o.data[i].name1) {
+                    pdf.text(60, y, o.data[i].date);
+                    pdf.text(83, y, o.data[i].time);
+                    pdf.text(115, y, 'H2H');
+                    pdf.text(135, y, o.data[i].name1);
+                    pdf.text(170, y, o.data[i].odds1);
+                    y += 10;
+                    pdf.text(135, y, o.data[i].name2);
+                    pdf.text(170, y, o.data[i].odds2);
+                }
+
+                y += 15;
+            }
+
+            pdf.save(o.tournament == "" ? "matches" : o.tournament);
+        }
+
+        function createDownload(content, name) {
+            if (nav.msSaveBlob) {
+                var blob = new Blob([content], { type: 'data:text/csvharset=utf-8,' });
+                nav.msSaveBlob(blob, name);
+            } else {
+                var eURI = encodeURI('data:text/csv;charset=utf-8,' + content);
+
+                var a = doc.createElement('a');
+                a.setAttribute('href', eURI);
+                a.setAttribute('download', name);
+
+                a.click('sample.pdf');
+            }
+        }
+
+        set('h2h', 'compile', function() {
+            var data = doc.getElementById('h2h-data').childNodes;
+            var d = [];
+
+            for (var i = 0; i < data.length; i++) {
+                d.push({
+                    date: data[i].childNodes[0].value,
+                    time: data[i].childNodes[1].value,
+                    name1: data[i].childNodes[2].value,
+                    odds1: data[i].childNodes[3].value,
+                    name2: data[i].childNodes[4].value,
+                    odds2: data[i].childNodes[5].value
+                });
+            }
+
+            return {
+                tournament: doc.getElementById('tournament-name').value,
+                data: d
+            };
+        });
+
+        set('outright', 'compile', function() {
+            var div = doc.getElementById('outright');
+            var data = doc.getElementById('outright-data').childNodes;
+            var d = [];
+
+            for (var i = 0; i < data.length; i++) {
+                d.push({
+                    name: data[i].childNodes[0].value,
+                    odds: data[i].childNodes[1].value
+                })
+            }
+
+            return {
+                tournament: doc.getElementById('tournament-name').value,
+                date: div.childNodes[0].value,
+                time: div.childNodes[1].value,
+                data: d
+            };
+        });
+
+        set('generate-info', 'onclick', function() {
+            var t = doc.getElementById(getSelectedType());
+            var d = t.compile();
+
+            console.log(d);
+            //createDownload(createCSV(d), "file.csv");
+            createPDF(d);
+        });
+
+        set('type-select', 'onchange', function() {
+            var v = getSelectedType();
+
+            set('bet-type', 'style.display', 'none');
+
+            doc.getElementById(v).style.display = 'block';
+        });
+
+        set('add-series', 'onclick', function() {
+            var div = doc.createElement('div');
+            div.innerHTML = '<input type="text" class="date" placeholder="Date" />'
+                    + '<input type="text" class="time-utc" placeholder="Time (UTC)" />'
+                    + '<input type="text" class="team" placeholder="First team name" />'
+                    + '<input type="text" class="odds" placeholder="First team odds" />'
+                    + '<input type="text" class="team" placeholder="Second team name" />'
+                    + '<input type="text" class="odds" placeholder="Second team odds" />'
+                    + '<button onclick="destroy(this.parentNode)">Remove</button>';
+
+            doc.getElementById('h2h-data').appendChild(div);
+
+            set('odds', 'onkeypress', function(e) {
+                var evt = e || window.event;
+                var key = evt.keyCode || evt.which;
+                key = String.fromCharCode(key);
+
+                var regex = /[0-9]|\./;
+
+                if (!regex.test(key)) {
+                    evt.returnValue = false;
+                    evt.preventDefault();
+                }
+            });
+        });
+
+        set('add-team', 'onclick', function() {
+            var div = doc.createElement('div');
+            div.innerHTML = '<input type="text" placeholder="Team name" />'
+                    + '<input type="text" class="odds" placeholder="Odds" />'
+                    + '<button onclick="destroy(this.parentNode)">Remove</button>';
+
+            doc.getElementById('outright-data').appendChild(div);
+
+            set('odds', 'onkeypress', function(e) {
+                var evt = e || window.event;
+                var key = evt.keyCode || evt.which;
+                key = String.fromCharCode(key);
+
+                var regex = /[0-9]|\./;
+
+                if (!regex.test(key)) {
+                    evt.returnValue = false;
+                    evt.preventDefault();
+                }
+            });
+        });
+    })(document, navigator);
+</script>
+</body>
+</html>
