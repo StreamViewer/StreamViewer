@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> <!---->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -79,10 +79,13 @@
 
             pdf.text(20, 30, 'TOURNAMENT');
             pdf.text(60, 30, 'DATE');
-            pdf.text(83, 30, 'TIME (UTC)');
-            pdf.text(115, 30, 'TYPE');
-            pdf.text(135, 30, 'TEAM');
-            pdf.text(170, 30, 'ODDS');
+            pdf.text(83, 30, 'TIME');
+            pdf.text(100, 30, 'TYPE');
+            pdf.text(125, 30, 'TEAM');
+            pdf.text(160, 30, 'ODDS');
+
+            pdf.setFontSize(10);
+            pdf.text(85, 35, '(UTC)');
 
             pdf.setFontSize(12);
             pdf.setFontType('normal');
@@ -93,23 +96,23 @@
 
             if (o.date) {
                 pdf.text(60, y, o.date);
-                pdf.text(83, y, o.time);
+                pdf.text(84, y, o.time);
             }
 
             for (var i = 0; i < o.data.length; i++) {
                 if (o.data[i].name) {
                     pdf.text(115, y, 'Outright');
-                    pdf.text(135, y, o.data[i].name);
-                    pdf.text(170, y, o.data[i].odds);
+                    pdf.text(125, y, o.data[i].name);
+                    pdf.text(160, y, o.data[i].odds);
                 } else if (o.data[i].name1) {
                     pdf.text(60, y, o.data[i].date);
-                    pdf.text(83, y, o.data[i].time);
-                    pdf.text(115, y, 'H2H');
-                    pdf.text(135, y, o.data[i].name1);
-                    pdf.text(170, y, o.data[i].odds1);
+                    pdf.text(84, y, o.data[i].time);
+                    pdf.text(100, y, 'H2H BO' + o.data[i].series);
+                    pdf.text(125, y, o.data[i].name1);
+                    pdf.text(160, y, o.data[i].odds1);
                     y += 10;
-                    pdf.text(135, y, o.data[i].name2);
-                    pdf.text(170, y, o.data[i].odds2);
+                    pdf.text(125, y, o.data[i].name2);
+                    pdf.text(160, y, o.data[i].odds2);
                 }
 
                 y += 15;
@@ -141,10 +144,11 @@
                 d.push({
                     date: data[i].childNodes[0].value,
                     time: data[i].childNodes[1].value,
-                    name1: data[i].childNodes[2].value,
-                    odds1: data[i].childNodes[3].value,
-                    name2: data[i].childNodes[4].value,
-                    odds2: data[i].childNodes[5].value
+                    series: data[i].childNodes[3].value,
+                    name1: data[i].childNodes[4].value,
+                    odds1: data[i].childNodes[5].value,
+                    name2: data[i].childNodes[6].value,
+                    odds2: data[i].childNodes[7].value
                 });
             }
 
@@ -195,6 +199,8 @@
             var div = doc.createElement('div');
             div.innerHTML = '<input type="text" class="date" placeholder="Date" />'
                     + '<input type="text" class="time-utc" placeholder="Time (UTC)" />'
+                    + '<label>Best of</label>'
+                    + '<input type="number" class="max-games" value="1" />'
                     + '<input type="text" class="team" placeholder="First team name" />'
                     + '<input type="text" class="odds" placeholder="First team odds" />'
                     + '<input type="text" class="team" placeholder="Second team name" />'
