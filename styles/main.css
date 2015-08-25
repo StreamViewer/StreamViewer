@@ -1,0 +1,152 @@
+body {
+    margin: 0;
+    padding: 0;
+    color: #909090;
+    font-size: 16px;
+}
+
+body, input, button {
+    font-family: Arial, "sans-serif";
+}
+
+a, a:visited {
+    color: #CC6322;
+}
+
+a:hover {
+    color: #FFFFFF !important;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background: #909090;
+}
+
+#content {
+    background-color: #161616;
+    position: fixed;
+    left: 71px;
+    width: calc(100% - 71px);
+    height: 100%;
+}
+
+#side-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color:#282828;
+    border-right: solid 1px #404040;
+    width: 60px;
+    height: 100%;
+    padding: 5px;
+}
+
+#side-menu a, #side-menu a:visited {
+    color: #909090;
+    font-size: 60px;
+    text-decoration: none;
+}
+
+#side-menu a:hover {
+    color: #FFFFFF !important;
+}
+
+#side-menu .help-button {
+    position: absolute;
+    bottom: 15px;
+}
+
+#side-menu .settings-button {
+    position: absolute;
+    bottom: 80px;
+}
+
+#help-img {
+    position: fixed;
+    display: none;
+}
+
+#side-menu hr {
+    border: 0;
+    height: 1px;
+    background: #909090;
+}
+
+.big-button {
+    background-color: #CC6322;
+    border: solid 2px #CC6322;
+    border-radius: 7px;
+    font-size: 30px;
+    padding: 10px;
+    color: #FFFFFF;
+    cursor: pointer;
+}
+
+.big-button:hover {
+    background-color: #CC4A00;
+    border-color: #CC4A00;
+}
+
+.medium-button {
+    background-color: #CC6322;
+    border: solid 2px #CC6322;
+    border-radius: 5px;
+    font-size: 20px;
+    padding: 5px;
+    color: #FFFFFF;
+    cursor: pointer;
+}
+
+.medium-button:hover {
+    background-color: #CC4A00;
+    border-color: #CC4A00;
+}
+
+.small-button {
+    background-color: #CC6322;
+    border: solid 2px #CC6322;
+    border-radius: 2px;
+    font-size: 12px;
+    padding: 2px;
+    color: #FFFFFF;
+    cursor: pointer;
+}
+
+.small-button:hover {
+    background-color: #404040;
+    border-color: #404040;
+}
+
+.big-field {
+    font-size: 30px;
+    padding: 10px;
+}
+
+.medium-field {
+    font-size: 20px;
+    padding: 5px;
+}
+
+.big-close {
+    color: #7F3F3F;
+    font-size: 30px;
+    padding: 0;
+    background: none;
+    border: solid 3px #7F3F3F;
+    border-radius: 5px;
+    opacity: .5;
+    cursor: pointer;
+}
+
+.big-close:hover {
+    color: #7F0000;
+    border-color: #7F0000;
+    opacity: 1;
+}
+
+.small-close {
+    font-size: 20px;
+    color: #FFFFFF;
+    cursor: default;
+}

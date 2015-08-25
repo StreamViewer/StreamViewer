@@ -15,6 +15,10 @@ function set(name, attr, value) {
     }
 }
 
+function destroy(e) {
+    e.parentNode.removeChild(e);
+}
+
 function getCookie(name) {
     var cookies = document.cookie.split(';');
 
@@ -28,8 +32,4 @@ function getCookie(name) {
     }
 
     return null;
-}
-
-function destroy(e) {
-    e.parentNode.removeChild(e);
 }
