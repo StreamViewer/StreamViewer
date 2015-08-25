@@ -45,7 +45,6 @@
 
     <script>
         loadTeams();
-        loadTournaments();
 
         function loadTeams() {
             var req = new XMLHttpRequest();
@@ -99,6 +98,7 @@
 </div>
 <div id="content">
     <datalist id="team-list"></datalist>
+
     <template id="add-team">
         <div class="team-info info-area">
             <input type="text" class="name medium-field" list="team-list" placeholder="Enter team name" /><br />
@@ -149,6 +149,21 @@
         <div id="notes" class="info-area"></div>
     </div>
     <script>
+        function isNewTeam(name) {
+            var o = document.getElementById('team-list').options;
+
+            var i = o.length;
+            while (i--) {
+                console.log(o[i].value);
+
+                if (o[i].value === name) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         function getSelectedType() {
             var e = document.getElementById('type-select');
             return e.options[e.selectedIndex].value;
@@ -163,10 +178,14 @@
                 if (data[i].querySelector) {
                     console.log(data[i]);
 
-                    d.push({
+                    var o = {
                         name: data[i].querySelector('.name').value,
                         odds: data[i].querySelector('.odds').value
-                    });
+                    };
+
+                    if (!(isNewTeam(o.name) && !confirm('Include new team: ' + o.name + '?'))) {
+                        d.push(o);
+                    }
                 }
             }
 
@@ -185,7 +204,7 @@
 
             for (var i = 0; i < data.length; i++) {
                 if (data[i].querySelector) {
-                    d.push({
+                    var o = {
                         date: data[i].querySelector('.date').value,
                         time: data[i].querySelector('.time-utc').value,
                         series: data[i].querySelector('.count').value,
@@ -193,7 +212,12 @@
                         odds1: data[i].querySelector('.odds1').value,
                         name2: data[i].querySelector('.name2').value,
                         odds2: data[i].querySelector('.odds2').value
-                    });
+                    };
+
+                    if (!(isNewTeam(o.name1) && !confirm('Include new team: ' + o.name1 + '?'))
+                            && !(isNewTeam(o.name2) && !confirm('Include new team: ' + o.name2 + '?'))) {
+                        d.push(o);
+                    }
                 }
             }
 
