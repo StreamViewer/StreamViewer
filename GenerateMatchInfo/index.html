@@ -68,9 +68,9 @@
 
     <template id="add-series">
         <div class="series-info info-area">
-            <input type="text" class="date medium-field" placeholder="Date DD/MM/YYYY" /><br />
+            <input type="text" class="date medium-field" onkeypress="restrictDate(this, event)" placeholder="Date DDMMYYYY" /><br />
             <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'))" placeholder="Time (UTC) HHMM" />
-            <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'))" placeholder="Time (local) HHMM" /><br />
+            <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'), this.parentElement.querySelector('.date'))" placeholder="Time (local) HHMM" /><br />
             <label>Best of:</label>
             <input type="number" class="count medium-field" /><br />
             <input type="text" class="name1 medium-field" placeholder="First team name" />
@@ -83,7 +83,7 @@
 
     <div id="info">
         <div class="info-area">
-            <select id="type-select" class="type-select medium-field">
+            <select id="type-select" class="type-select medium-field" onchange="changeBetType()">
                 <option disabled selected> -- Select bet type -- </option>
                 <option value="h2h">Head to head</option>
                 <option value="outright">Outright</option>
@@ -98,179 +98,15 @@
 
         <div id="outright" class="bet-type outright">
             <div class="info-area">
-                <input type="text" class="date medium-field" onkeypress="restrictTime(this, event)" placeholder="Date DD/MM/YYYY" />
+                <input type="text" class="date medium-field" onkeypress="restrictDate(this, event)" placeholder="Date DDMMYYYY" />
                 <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'))" placeholder="Time (UTC) HHMM" />
-                <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'))" placeholder="Time (local) HHMM" />
+                <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'), this.parentElement.querySelector('.date'))" placeholder="Time (local) HHMM" />
             </div>
 
             <div id="outright-data"></div>
         </div>
     </div>
     <script src="../scripts/utils.js"></script>
-    <script>
-        (function(doc, nav) {
-            function getSelectedType() {
-                var e = doc.getElementById('type-select');
-                var o = e.options;
-                return e.options[e.selectedIndex].value;
-            }
-
-            function createCSV(o) {
-                var csv = 'TOURNAMENT,DATE,TIME UTC,TYPE,TEAM,ODDS';
-
-                csv += "\n\n" + o.tournament;
-
-                for (var i = 0; i < o.data.length; i++) {
-                    if (o.data[i].name) {
-                        csv += ',,,Outright' + o.data[i].name;
-                        csv += ',' + o.data[i].odds;
-                    } else if (o.data[i].name1) {
-                        csv += ',,,H2H' + o.data[i].name1;
-                        csv += ',' + o.data[i].odds1;
-                        csv += '\n,,,' + o.data[i].name2;
-                        csv += ',' + o.data[i].odds2;
-                    }
-
-                    csv += "\n\n"
-                }
-
-                return csv;
-            }
-
-            function createPDF(o) {
-                var pdf = new jsPDF();
-
-                pdf.setFontSize(15);
-                pdf.setFontType('bold');
-
-                pdf.text(20, 30, 'TOURNAMENT');
-                pdf.text(60, 30, 'DATE');
-                pdf.text(83, 30, 'TIME');
-                pdf.text(100, 30, 'TYPE');
-                pdf.text(125, 30, 'TEAM');
-                pdf.text(160, 30, 'ODDS');
-
-                pdf.setFontSize(10);
-                pdf.text(85, 34, '(UTC)');
-
-                pdf.setFontSize(12);
-                pdf.setFontType('normal');
-
-                var y = 40;
-
-                pdf.text(20, y, o.tournament);
-
-                if (o.date) {
-                    pdf.text(60, y, o.date);
-                    pdf.text(84, y, o.time);
-                }
-
-                for (var i = 0; i < o.data.length; i++) {
-                    if (o.data[i].name) {
-                        pdf.text(115, y, 'Outright');
-                        pdf.text(125, y, o.data[i].name);
-                        pdf.text(160, y, o.data[i].odds);
-                    } else if (o.data[i].name1) {
-                        pdf.text(60, y, o.data[i].date);
-                        pdf.text(84, y, o.data[i].time);
-                        pdf.text(100, y, 'H2H BO' + o.data[i].series);
-                        pdf.text(125, y, o.data[i].name1);
-                        pdf.text(160, y, o.data[i].odds1);
-                        y += 10;
-                        pdf.text(125, y, o.data[i].name2);
-                        pdf.text(160, y, o.data[i].odds2);
-                    }
-
-                    y += 15;
-                }
-
-                pdf.save(o.tournament == "" ? "matches" : o.tournament);
-            }
-
-            function createDownload(content, name) {
-                if (nav.msSaveBlob) {
-                    var blob = new Blob([content], { type: 'data:text/csvharset=utf-8,' });
-                    nav.msSaveBlob(blob, name);
-                } else {
-                    var eURI = encodeURI('data:text/csv;charset=utf-8,' + content);
-
-                    var a = doc.createElement('a');
-                    a.setAttribute('href', eURI);
-                    a.setAttribute('download', name);
-
-                    a.click('sample.pdf');
-                }
-            }
-
-            set('h2h', 'compile', function() {
-                var data = doc.getElementById('h2h-data').childNodes;
-                var d = [];
-
-                for (var i = 0; i < data.length; i++) {
-                    d.push({
-                        date: data[i].childNodes[0].value,
-                        time: data[i].childNodes[1].value,
-                        series: data[i].childNodes[3].value,
-                        name1: data[i].childNodes[4].value,
-                        odds1: data[i].childNodes[5].value,
-                        name2: data[i].childNodes[6].value,
-                        odds2: data[i].childNodes[7].value
-                    });
-                }
-
-                return {
-                    tournament: doc.getElementById('tournament-name').value,
-                    data: d
-                };
-            });
-
-            set('outright', 'compile', function() {
-                var div = doc.getElementById('outright');
-                var data = doc.getElementById('outright-data').childNodes;
-                var d = [];
-
-                for (var i = 0; i < data.length; i++) {
-                    d.push({
-                        name: data[i].childNodes[0].value,
-                        odds: data[i].childNodes[1].value
-                    })
-                }
-
-                return {
-                    tournament: doc.getElementById('tournament-name').value,
-                    date: div.childNodes[0].value,
-                    time: div.childNodes[1].value,
-                    data: d
-                };
-            });
-
-            set('generate-info', 'onclick', function() {
-                var t = doc.getElementById(getSelectedType());
-                var d = t.compile();
-
-                //createDownload(createCSV(d), "file.csv");
-                createPDF(d);
-            });
-
-            set('type-select', 'onchange', function() {
-                var v = getSelectedType();
-
-                set('bet-type', 'style.display', 'none');
-
-                doc.getElementById(v).style.display = 'block';
-            });
-
-            set('add-series', 'onclick', function() {
-                var content = doc.querySelector('#add-series').content;
-                doc.querySelector('#h2h-data').appendChild(doc.importNode(content, true));
-            });
-
-            set('add-team', 'onclick', function() {
-                var content = doc.querySelector('#add-team').content;
-                doc.querySelector('#outright-data').appendChild(doc.importNode(content, true));
-            });
-        })(document, navigator);
-    </script>
     <script>
         function getSelectedType() {
             var e = document.getElementById('type-select');
@@ -355,41 +191,49 @@
             pdf.setFontType('bold');
 
             pdf.text(20, 30, 'TOURNAMENT');
-            pdf.text(60, 30, 'DATE');
-            pdf.text(83, 30, 'TIME');
-            pdf.text(100, 30, 'TYPE');
-            pdf.text(125, 30, 'TEAM');
-            pdf.text(160, 30, 'ODDS');
+            pdf.text(65, 30, 'DATE');
+            pdf.text(88, 30, 'TIME');
+            pdf.text(105, 30, 'TYPE');
+            pdf.text(130, 30, 'TEAM');
+            pdf.text(165, 30, 'ODDS');
 
             pdf.setFontSize(10);
-            pdf.text(85, 34, '(UTC)');
+            pdf.text(90, 34, '(UTC)');
 
             pdf.setFontSize(12);
             pdf.setFontType('normal');
 
             var y = 40;
 
-            pdf.text(20, y, o.tournament);
+            var trm = o.tournament.split('-');
+
+            for (var it = 0; it < trm.length; it++) {
+                if (it == 0) {
+                    pdf.text(20, y + it * 10, trm[it]);
+                } else {
+                    pdf.text(20, y + it * 10, "- " + trm[it]);
+                }
+            }
 
             if (o.date) {
-                pdf.text(60, y, o.date);
-                pdf.text(84, y, o.time);
+                pdf.text(65, y, o.date);
+                pdf.text(89, y, o.time);
             }
 
             for (var i = 0; i < o.data.length; i++) {
                 if (o.data[i].name) {
-                    pdf.text(100, y, 'Outright');
-                    pdf.text(125, y, o.data[i].name);
-                    pdf.text(160, y, o.data[i].odds);
+                    pdf.text(105, y, 'Outright');
+                    pdf.text(130, y, o.data[i].name);
+                    pdf.text(165, y, o.data[i].odds);
                 } else if (o.data[i].name1) {
-                    pdf.text(60, y, o.data[i].date);
-                    pdf.text(84, y, o.data[i].time);
-                    pdf.text(100, y, 'H2H BO' + o.data[i].series);
-                    pdf.text(125, y, o.data[i].name1);
-                    pdf.text(160, y, o.data[i].odds1);
+                    pdf.text(65, y, o.data[i].date);
+                    pdf.text(89, y, o.data[i].time);
+                    pdf.text(105, y, 'H2H BO' + o.data[i].series);
+                    pdf.text(130, y, o.data[i].name1);
+                    pdf.text(165, y, o.data[i].odds1);
                     y += 10;
-                    pdf.text(125, y, o.data[i].name2);
-                    pdf.text(160, y, o.data[i].odds2);
+                    pdf.text(130, y, o.data[i].name2);
+                    pdf.text(165, y, o.data[i].odds2);
                 }
 
                 y += 15;
@@ -420,6 +264,17 @@
             }
 
             createPDF(o);
+        }
+
+        function changeBetType() {
+            var t = document.querySelectorAll('.bet-type');
+
+            var i = t.length;
+            while (i--) {
+                t[i].style.display = 'none';
+            }
+
+            document.getElementById(getSelectedType()).style.display = 'block';
         }
 
         function addItem() {
@@ -462,7 +317,24 @@
             }
         }
 
-        function updateLocalTime(value, field) {
+        function restrictDate(field, e) {
+            var evt = e || window.event;
+            var key = evt.keyCode || evt.which;
+            key = String.fromCharCode(key);
+
+            var regex = /[0-9]/;
+
+            if (!regex.test(key) || field.value.length == 10) {
+                evt.returnValue = false;
+                evt.preventDefault();
+            } else {
+                if (field.value.length == 2 || field.value.length == 5) {
+                    field.value += '/';
+                }
+            }
+        }
+
+        function updateLocalTime(value, time) {
             var s = value.split(':');
 
             var h = s[0];
@@ -477,11 +349,15 @@
                     h += 24;
                 }
 
-                field.value = h + ':' + m;
+                if (h / 10 < 1) {
+                    h = "0" + h;
+                }
+
+                time.value = h + ':' + m;
             }
         }
 
-        function updateUTC(value, field) {
+        function updateUTC(value, time, date) {
             var s = value.split(':');
 
             var h = s[0];
@@ -490,13 +366,36 @@
             if (h && m && h <= 24 && h > 0 && m < 60) {
                 h = parseInt(h) + new Date().getTimezoneOffset() / 60;
 
+                var dd = 0;
+
                 if (h > 24) {
                     h -= 24;
+                    dd = 1;
                 } else if (h < 0) {
                     h += 24;
+                    dd = -1;
                 }
 
-                field.value = h + ':' + m;
+                if (h / 10 < 1) {
+                    h = "0" + h;
+                }
+
+                time.value = h + ':' + m;
+
+                if (date.value) {
+                    var d = date.value.split('/');
+                    date.value = "";
+
+                    d[0] = parseInt(d[0]) + dd;
+
+                    for (var i = 0, length = d.length; i < length; i++) {
+                        if (i == 0) {
+                            date.value += d[i];
+                        } else {
+                            date.value += "/" + d[i];
+                        }
+                    }
+                }
             }
         }
     </script>
