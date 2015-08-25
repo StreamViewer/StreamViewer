@@ -119,11 +119,17 @@ hr {
 }
 
 .big-field {
+    background-color: #404040;
+    border-color: #161616;
+    color: #FFFFFF;
     font-size: 30px;
     padding: 10px;
 }
 
 .medium-field {
+    background-color: #404040;
+    border-color: #161616;
+    color: #FFFFFF;
     font-size: 20px;
     padding: 5px;
 }
