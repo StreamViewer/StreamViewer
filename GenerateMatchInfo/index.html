@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
     <link href="../styles/main.css" rel="stylesheet" />
-    <script src="../scripts/utils.js"></script>
     <script src="../scripts/jspdf/jspdf.js"></script>
     <script src="../scripts/jspdf/FileSaver.js"></script>
 
@@ -43,6 +42,47 @@
             width: 50px;
         }
     </style>
+
+    <script>
+        loadTeams();
+        loadTournaments();
+
+        function loadTeams() {
+            var req = new XMLHttpRequest();
+
+            req.onreadystatechange = function(res) {
+                if (req.readyState == 4) {
+                    if (req.status == 200) {
+                        var d = document.getElementById('team-list');
+
+                        var list = parseTeamCSV(req.responseText);
+
+                        list.forEach(function(t) {
+                            var o = document.createElement('option');
+                            o.value = t;
+                            d.appendChild(o);
+                        });
+                    }
+                }
+            };
+
+            req.open('GET', 'teams.csv', true);
+
+            req.send();
+        }
+
+        function parseTeamCSV(text) {
+            var data = text.split('\n');
+            var ret = [];
+
+            var i = data.length;
+            while (i--) {
+                ret.push(data[i].split(',')[2]);
+            }
+
+            return ret;
+        }
+    </script>
 </head>
 <body>
 <div id="side-menu">
@@ -54,14 +94,15 @@
     <hr />
     <a class="material-icons" href="#" onclick="generate()" title="Generate">&#xE2C4;</a>
 
-    <a class="material-icons settings-button" href="#" title="Settings">&#xE8B8;</a>
-    <a class="material-icons help-button" href="#" title="Help">&#xE8FD;</a>
+    <!-- <a class="material-icons settings-button" href="#" title="Settings">&#xE8B8;</a>
+    <a class="material-icons help-button" href="#" title="Help">&#xE8FD;</a> -->
 </div>
 <div id="content">
+    <datalist id="team-list"></datalist>
     <template id="add-team">
         <div class="team-info info-area">
-            <input type="text" class="name medium-field" placeholder="Enter team name" />
-            <input type="text" class="odds medium-field" onkeypress="restrictOdds(event)" placeholder="Enter odds" />
+            <input type="text" class="name medium-field" list="team-list" placeholder="Enter team name" /><br />
+            <input type="text" class="odds medium-field" onkeypress="restrictOdds(this, event)" onchange="completeOdds(this)" placeholder="Enter odds" />
             <button class="remove-item big-close material-icons" onclick="this.parentNode.parentNode.removeChild(this.parentNode);">&#xE5CD;</button>
         </div>
     </template>
@@ -72,11 +113,11 @@
             <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'))" placeholder="Time (UTC) HHMM" />
             <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'), this.parentElement.querySelector('.date'))" placeholder="Time (local) HHMM" /><br />
             <label>Best of:</label>
-            <input type="number" class="count medium-field" /><br />
-            <input type="text" class="name1 medium-field" placeholder="First team name" />
-            <input type="text" class="odds1 medium-field" onkeypress="restrictOdds(event)" placeholder="First team odds" /><br />
-            <input type="text" class="name2 medium-field" placeholder="Second team name" />
-            <input type="text" class="odds2 medium-field" onkeypress="restrictOdds(event)" placeholder="Second team odds" />
+            <input type="number" class="count medium-field" value="1" /><br />
+            <input type="text" class="name1 medium-field" list="team-list" placeholder="First team name" />
+            <input type="text" class="odds1 medium-field" onkeypress="restrictOdds(this, event)" onchange="completeOdds(this)" placeholder="First team odds" /><br />
+            <input type="text" class="name2 medium-field" list="team-list" placeholder="Second team name" />
+            <input type="text" class="odds2 medium-field" onkeypress="restrictOdds(this, event)" onchange="completeOdds(this)" placeholder="Second team odds" />
             <button class="remove-item big-close material-icons" onclick="this.parentNode.parentNode.removeChild(this.parentNode);">&#xE5CD;</button>
         </div>
     </template>
@@ -106,7 +147,6 @@
             <div id="outright-data"></div>
         </div>
     </div>
-    <script src="../scripts/utils.js"></script>
     <script>
         function getSelectedType() {
             var e = document.getElementById('type-select');
@@ -287,16 +327,28 @@
             }
         }
 
-        function restrictOdds(e) {
+        function restrictOdds(field, e) {
             var evt = e || window.event;
             var key = evt.keyCode || evt.which;
             key = String.fromCharCode(key);
 
             var regex = /[0-9]|\./;
 
-            if (!regex.test(key)) {
+            if (!regex.test(key) || (key == '.' && field.value.indexOf('.') != -1) || (field.value.length > field.value.indexOf('.') + 2)) {
                 evt.returnValue = false;
                 evt.preventDefault();
+            }
+        }
+
+        function completeOdds(field) {
+            var i = field.value.indexOf('.');
+            if (i == -1) {
+                field.value += '.00';
+            } else {
+                var count = 2 - (field.value.length - i - 1);
+                while (count--) {
+                    field.value += '0';
+                }
             }
         }
 
