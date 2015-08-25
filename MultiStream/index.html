@@ -412,11 +412,13 @@
 
         var mode = getMode();
 
-        if (mode == "cascade") {
-            cascadeResize(players);
-        } else {
-            uniformResize(players);
-        }
+        cascadeResize(players);
+
+//        if (mode == "cascade") {
+//            cascadeResize(players);
+//        } else {
+//            uniformResize(players);
+//        }
     }
 
     window.onresize = function() {
