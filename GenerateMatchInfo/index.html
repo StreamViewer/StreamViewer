@@ -64,7 +64,7 @@
         }
     </style>
 
-    <script>
+    <!--<script>
         loadTeams();
 
         function loadTeams() {
@@ -102,8 +102,8 @@
 
             return ret;
         }
-    </script>
-    <!--<script>
+    </script>-->
+    <script>
         var app = {};
 
         loadTeams();
@@ -125,7 +125,19 @@
                             var o = document.createElement('option');
                             o.value = t.name;
                             d.appendChild(o);
-                        })
+                        });
+
+                        app.teams.getTeamID = function(name) {
+                            var ret = 'unknown';
+                            app.teams.forEach(function (item) {
+                                if (item.name == name) {
+                                    ret = item.lid;
+                                    return;
+                                }
+                            });
+
+                            return ret;
+                        }
                     }
                 }
             };
@@ -134,7 +146,7 @@
 
             req.send();
         }
-    </script>-->
+    </script>
 </head>
 <body>
 <div id="side-menu">
@@ -247,6 +259,7 @@
 
                     var o = {
                         name: data[i].querySelector('.name').value,
+                        id: app.teams.getTeamID(data[i].querySelector('.name').value),
                         odds: data[i].querySelector('.odds').value
                     };
 
@@ -277,8 +290,10 @@
                         time: data[i].querySelector('.time-utc').value,
                         series: data[i].querySelector('.count').value,
                         name1: data[i].querySelector('.name1').value,
+                        id1: app.teams.getTeamID(data[i].querySelector('.name1').value),
                         odds1: data[i].querySelector('.odds1').value,
                         name2: data[i].querySelector('.name2').value,
+                        id2: app.teams.getTeamID(data[i].querySelector('.name2').value),
                         odds2: data[i].querySelector('.odds2').value
                     };
 
@@ -376,8 +391,146 @@
             pdf.save(o.tournament == "" ? "matches" : o.tournament);
         }
 
-        function generatePDF(object) {
-            const topStyle = {};
+        function generatePDF(o) {
+            var title = { size: 16, style: 'bold' },
+                    listTitle = { size: 14, style: 'bold' },
+                    listTitleSub = { size: 10, style: 'bold' },
+                    listItem = { size: 12, style: 'normal' };
+
+            var font = { name: 'helvetica', style: 'normal' };
+
+            var pdf = new jsPDF('portrait', 'pt', 'a4');
+            pdf.setFont(font.name, font.style);
+
+            var y = 80;
+
+            function createH2H() {
+                var dateX = 50,
+                        timeX = 125,
+                        typeX = 170,
+                        nameX = 240,
+                        oddsX = 370;
+
+                var matchSpacing = 25,
+                        teamSpacing = 15;
+
+                function writeTitle() {
+                    pdf.setFontSize(listTitle.size);
+                    pdf.setFontStyle(listTitle.style);
+
+                    pdf.text('DATE', dateX, y);
+                    pdf.text('TIME', timeX, y);
+
+                    pdf.setFontSize(listTitleSub.size);
+                    pdf.setFontStyle(listTitleSub.style);
+
+                    pdf.text('(UTC)', timeX + 5, y + 10);
+
+                    pdf.setFontSize(listTitle.size);
+                    pdf.setFontStyle(listTitle.style);
+
+                    pdf.text('TYPE', typeX, y);
+                    pdf.text('TEAM', nameX, y);
+                    pdf.text('ODDS', oddsX, y);
+
+                    pdf.setFontSize(listItem.size);
+                    pdf.setFontStyle(listItem.style);
+                }
+
+                writeTitle();
+
+                o.data.forEach(function(item) {
+                    y += matchSpacing;
+
+                    pdf.text(item.date, dateX, y);
+                    pdf.text(item.time, timeX + 2, y);
+                    pdf.text('H2H BO' + item.series, typeX, y);
+
+                    var name1 = pdf.splitTextToSize(item.name1, (oddsX - nameX) * 2);
+                    name1.push('ID: ' + item.id1);
+
+                    pdf.text(name1, nameX, y);
+
+                    pdf.text(item.odds1, oddsX, y);
+
+                    y += (name1.length - 1) * listItem.size + teamSpacing;
+
+                    var name2 = pdf.splitTextToSize(item.name2, (oddsX - nameX) * 2);
+                    name2.push('ID: ' + item.id2);
+
+                    pdf.text(name2, nameX, y);
+
+                    pdf.text(item.odds2, oddsX, y);
+
+                    y += (name2.length - 1) * listItem.size;
+
+                    if (y > 700) {
+                        pdf.addPage();
+                        y = 50;
+                        writeTitle();
+                    }
+                });
+            }
+
+            function createOutright() {
+                var nameX = 50,
+                        oddsX = 270;
+
+                var teamSpacing = 25;
+
+                pdf.setFontSize(listItem.size);
+                pdf.setFontStyle(listItem.style);
+
+                pdf.text('Bet Type: Outright\nStarts: ' + o.date + ' ' + o.time + ' UTC', 50, 70);
+
+                var y = 120;
+
+                function writeTitle() {
+                    pdf.setFontSize(listTitle.size);
+                    pdf.setFontStyle(listTitle.style);
+
+                    pdf.text('TEAM', nameX, y);
+                    pdf.text('ODDS', oddsX, y);
+
+                    pdf.setFontSize(listItem.size);
+                    pdf.setFontStyle(listItem.style);
+                }
+
+                writeTitle();
+
+                o.data.forEach(function(item) {
+                    y += teamSpacing;
+
+                    var name = pdf.splitTextToSize(item.name, (oddsX - nameX) * 2);
+                    name.push('ID: ' + item.id);
+
+                    pdf.text(name, nameX, y);
+                    pdf.text(item.odds, oddsX, y);
+
+                    y += (name.length - 1) * listItem.size;
+
+                    if (y > 750) {
+                        pdf.addPage();
+                        y = 50;
+                        writeTitle();
+                    }
+                });
+            }
+
+            pdf.setFontSize(title.size);
+            pdf.setFontStyle(title.style);
+
+            pdf.text(o.tournament, 50, 50);
+
+            if (o.type == 'h2h') {
+                createH2H();
+            } else if (o.type == 'outright') {
+                createOutright();
+            } else {
+                alert('No tournament type selected');
+            }
+
+            pdf.save(o.tournament);
         }
 
         function addTeam() {
@@ -401,7 +554,7 @@
                 o = compileOutright();
             }
 
-            createPDF(o);
+            generatePDF(o);
         }
 
         function changeBetType() {
