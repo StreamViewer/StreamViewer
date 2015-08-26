@@ -9,6 +9,7 @@
     <link href="../styles/main.css" rel="stylesheet" />
     <script src="../scripts/jspdf/jspdf.js"></script>
     <script src="../scripts/jspdf/FileSaver.js"></script>
+    <script src="../scripts/jspdf/jspdf.plugin.split_text_to_size.js"></script>
 
     <style>
         #content {
@@ -141,6 +142,7 @@
     <!-- not for now <a class="material-icons" href="#" title="Apps">&#xE5C3;</a> -->
     <hr />
     <a class="material-icons" href="#" onclick="addItem()" title="Add Item">&#xE145;</a>
+    <a class="material-icons" href="#" onclick="toggleNoteContainer()" title="Add Note">&#xE89C;</a>
     <hr />
     <a class="material-icons" href="#" onclick="generate()" title="Generate">&#xE2C4;</a>
 
@@ -258,7 +260,8 @@
                 tournament: document.getElementById('tournament-name').value,
                 date: div.querySelector('.date').value,
                 time: div.querySelector('.time-utc').value,
-                data: d
+                data: d,
+                type: 'outright'
             };
         }
 
@@ -288,7 +291,8 @@
 
             return {
                 tournament: document.getElementById('tournament-name').value,
-                data: d
+                data: d,
+                type: 'h2h'
             };
         }
 
@@ -339,7 +343,7 @@
 
             for (var it = 0; it < trm.length; it++) {
                 if (it == 0) {
-                    pdf.text(20, y + it * 10, trm[it]);
+                    pdf.text(20, y + it * 10, pdf.splitTextToSize(trm[it], 55));
                 } else {
                     pdf.text(20, y + it * 10, "- " + trm[it]);
                 }
@@ -370,6 +374,10 @@
             }
 
             pdf.save(o.tournament == "" ? "matches" : o.tournament);
+        }
+
+        function generatePDF(object) {
+
         }
 
         function addTeam() {
