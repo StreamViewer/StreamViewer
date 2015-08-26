@@ -20,6 +20,26 @@
             padding: 10px;
         }
 
+        #add-note {
+            position: fixed;
+            background-color: #282828;
+            border: solid 1px #404040;
+            border-left: none;
+            top: 145px;
+            left: 70px;
+            height: 80px;
+            width: 200px;
+            z-index: 2;
+            text-align: center;
+            line-height: 40px;
+            display: none;
+        }
+
+        #add-note input[type='text'] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
         .info-area {
             position: relative;
             padding: 10px;
@@ -82,6 +102,38 @@
             return ret;
         }
     </script>
+    <!--<script>
+        var app = {};
+
+        loadTeams();
+
+        function loadTeams() {
+            var req = new XMLHttpRequest();
+
+            req.onreadystatechange = function(res) {
+                console.log(req.status);
+                if (req.readyState == 4) {
+                    console.log(req.status);
+
+                    if (req.status == 200) {
+                        app.teams = JSON.parse(req.responseText);
+
+                        var d = document.getElementById('team-list');
+
+                        app.teams.forEach(function(t) {
+                            var o = document.createElement('option');
+                            o.value = t.name;
+                            d.appendChild(o);
+                        })
+                    }
+                }
+            };
+
+            req.open('GET', 'https://unikrn.com/rest/teams', true);
+
+            req.send();
+        }
+    </script>-->
 </head>
 <body>
 <div id="side-menu">
@@ -89,35 +141,49 @@
     <!-- not for now <a class="material-icons" href="#" title="Apps">&#xE5C3;</a> -->
     <hr />
     <a class="material-icons" href="#" onclick="addItem()" title="Add Item">&#xE145;</a>
-    <a class="material-icons" href="#" title="Add Note">&#xE89C;</a>
+    <a class="material-icons" href="#" onclick="toggleNoteContainer()" title="Add Note">&#xE89C;</a>
     <hr />
     <a class="material-icons" href="#" onclick="generate()" title="Generate">&#xE2C4;</a>
 
     <!-- <a class="material-icons settings-button" href="#" title="Settings">&#xE8B8;</a>
     <a class="material-icons help-button" href="#" title="Help">&#xE8FD;</a> -->
 </div>
+
+<!-- Pretty hacked together, maybe change this later -->
+<form id="add-note" onsubmit="addNote(this.querySelector('#note-text').value); this.querySelector('#note-text').value = ''; this.style.display = 'none'; return false">
+    <input id="note-text" class="medium-field" autocomplete="off" type="text" />
+    <input class="medium-button" type="submit" value="Add Note" />
+</form>
+
 <div id="content">
     <datalist id="team-list"></datalist>
 
     <template id="add-team">
         <div class="team-info info-area">
             <input type="text" class="name medium-field" list="team-list" placeholder="Enter team name" /><br />
-            <input type="text" class="odds medium-field" onkeypress="restrictOdds(this, event)" onchange="completeOdds(this)" placeholder="Enter odds" />
+            <input type="text" class="odds medium-field" onkeypress="restrictOdds(this, event)" onfocus="this.value=''" onchange="completeOdds(this)" placeholder="Enter odds" />
             <button class="remove-item big-close material-icons" onclick="this.parentNode.parentNode.removeChild(this.parentNode);">&#xE5CD;</button>
         </div>
     </template>
 
     <template id="add-series">
         <div class="series-info info-area">
-            <input type="text" class="date medium-field" onkeypress="restrictDate(this, event)" placeholder="Date DDMMYYYY" /><br />
-            <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'))" placeholder="Time (UTC) HHMM" />
-            <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'), this.parentElement.querySelector('.date'))" placeholder="Time (local) HHMM" /><br />
+            <input type="text" class="date medium-field" onkeypress="restrictDate(this, event)" onfocus="this.value=''" placeholder="Date DDMMYYYY" /><br />
+            <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'))" placeholder="Time (UTC) HHMM" />
+            <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'), this.parentElement.querySelector('.date'))" placeholder="Time (local) HHMM" /><br />
             <label>Best of:</label>
             <input type="number" class="count medium-field" value="1" /><br />
             <input type="text" class="name1 medium-field" list="team-list" placeholder="First team name" />
-            <input type="text" class="odds1 medium-field" onkeypress="restrictOdds(this, event)" onchange="completeOdds(this)" placeholder="First team odds" /><br />
+            <input type="text" class="odds1 medium-field" onkeypress="restrictOdds(this, event)" onfocus="this.value=''" onchange="completeOdds(this)" placeholder="First team odds" /><br />
             <input type="text" class="name2 medium-field" list="team-list" placeholder="Second team name" />
-            <input type="text" class="odds2 medium-field" onkeypress="restrictOdds(this, event)" onchange="completeOdds(this)" placeholder="Second team odds" />
+            <input type="text" class="odds2 medium-field" onkeypress="restrictOdds(this, event)" onfocus="this.value=''" onchange="completeOdds(this)" placeholder="Second team odds" />
+            <button class="remove-item big-close material-icons" onclick="this.parentNode.parentNode.removeChild(this.parentNode);">&#xE5CD;</button>
+        </div>
+    </template>
+
+    <template id="note">
+        <div class="info-area">
+            <p></p>
             <button class="remove-item big-close material-icons" onclick="this.parentNode.parentNode.removeChild(this.parentNode);">&#xE5CD;</button>
         </div>
     </template>
@@ -139,14 +205,14 @@
 
         <div id="outright" class="bet-type outright">
             <div class="info-area">
-                <input type="text" class="date medium-field" onkeypress="restrictDate(this, event)" placeholder="Date DDMMYYYY" />
-                <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'))" placeholder="Time (UTC) HHMM" />
-                <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'), this.parentElement.querySelector('.date'))" placeholder="Time (local) HHMM" />
+                <input type="text" class="date medium-field" onkeypress="restrictDate(this, event)" onfocus="this.value=''" placeholder="Date DDMMYYYY" />
+                <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'))" placeholder="Time (UTC) HHMM" />
+                <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'), this.parentElement.querySelector('.date'))" placeholder="Time (local) HHMM" />
             </div>
 
             <div id="outright-data"></div>
         </div>
-        <div id="notes" class="info-area"></div>
+        <div id="notes"></div>
     </div>
     <script>
         function isNewTeam(name) {
@@ -352,6 +418,22 @@
             }
         }
 
+        function toggleNoteContainer() {
+            var an = document.getElementById('add-note');
+
+            if (an.style.display == 'block') {
+                an.style.display = 'none';
+            } else {
+                an.style.display = 'block';
+            }
+        }
+
+        function addNote(text) {
+            var content = document.importNode(document.getElementById('note').content, true);
+            content.querySelector('p').innerText = text;
+            document.getElementById('notes').appendChild(content);
+        }
+
         function restrictOdds(field, e) {
             var evt = e || window.event;
             var key = evt.keyCode || evt.which;
@@ -401,7 +483,7 @@
 
             var regex = /[0-9]/;
 
-            if (!regex.test(key) || field.value.length == 10) {
+            if (!(regex.test(key)) || field.value.length == 10) {
                 evt.returnValue = false;
                 evt.preventDefault();
             } else {
