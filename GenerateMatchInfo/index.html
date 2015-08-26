@@ -554,7 +554,8 @@
 
         function addNote(text) {
             var content = document.importNode(document.getElementById('note').content, true);
-            content.querySelector('p').innerText = text;
+            content.querySelector('p').innerHTML = text;
+            console.log(content);
             document.getElementById('notes').appendChild(content);
         }
 
