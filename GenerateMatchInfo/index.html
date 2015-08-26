@@ -18,7 +18,6 @@
 
         #h2h, #outright {
             display: none;
-            padding: 10px;
         }
 
         #add-note {
@@ -51,6 +50,10 @@
             line-height: 40px;
         }
 
+        .info-area p {
+            line-height: initial;
+        }
+
         .remove-item {
             position: absolute;
             top: 5px;
@@ -63,46 +66,6 @@
             width: 50px;
         }
     </style>
-
-    <!--<script>
-        loadTeams();
-
-        function loadTeams() {
-            var req = new XMLHttpRequest();
-
-            req.onreadystatechange = function(res) {
-                if (req.readyState == 4) {
-                    if (req.status == 200) {
-                        var d = document.getElementById('team-list');
-
-                        var list = parseTeamCSV(req.responseText);
-
-                        list.forEach(function(t) {
-                            var o = document.createElement('option');
-                            o.value = t;
-                            d.appendChild(o);
-                        });
-                    }
-                }
-            };
-
-            req.open('GET', 'teams.csv', true);
-
-            req.send();
-        }
-
-        function parseTeamCSV(text) {
-            var data = text.split('\n');
-            var ret = [];
-
-            var i = data.length;
-            while (i--) {
-                ret.push(data[i].split(',')[2]);
-            }
-
-            return ret;
-        }
-    </script>-->
     <script>
         var app = {};
 
@@ -112,10 +75,7 @@
             var req = new XMLHttpRequest();
 
             req.onreadystatechange = function(res) {
-                console.log(req.status);
                 if (req.readyState == 4) {
-                    console.log(req.status);
-
                     if (req.status == 200) {
                         app.teams = JSON.parse(req.responseText);
 
@@ -175,7 +135,7 @@
         <div class="team-info info-area">
             <input type="text" class="name medium-field" list="team-list" placeholder="Enter team name" /><br />
             <input type="text" class="odds medium-field" onkeypress="restrictOdds(this, event)" onfocus="this.value=''" onchange="completeOdds(this)" placeholder="Enter odds" />
-            <button class="remove-item big-close material-icons" onclick="this.parentNode.parentNode.removeChild(this.parentNode);">&#xE5CD;</button>
+            <button type="button" class="remove-item big-close material-icons" onclick="this.parentNode.parentNode.removeChild(this.parentNode);">&#xE5CD;</button>
         </div>
     </template>
 
@@ -190,7 +150,7 @@
             <input type="text" class="odds1 medium-field" onkeypress="restrictOdds(this, event)" onfocus="this.value=''" onchange="completeOdds(this)" placeholder="First team odds" /><br />
             <input type="text" class="name2 medium-field" list="team-list" placeholder="Second team name" />
             <input type="text" class="odds2 medium-field" onkeypress="restrictOdds(this, event)" onfocus="this.value=''" onchange="completeOdds(this)" placeholder="Second team odds" />
-            <button class="remove-item big-close material-icons" onclick="this.parentNode.parentNode.removeChild(this.parentNode);">&#xE5CD;</button>
+            <button type="button" class="remove-item big-close material-icons" onclick="this.parentNode.parentNode.removeChild(this.parentNode);">&#xE5CD;</button>
         </div>
     </template>
 
@@ -269,11 +229,22 @@
                 }
             }
 
+            var notes = [];
+
+            var dn = document.getElementById('notes').childNodes;
+
+            for (i = 0; i < dn.length; i++) {
+                if (dn[i].firstElementChild) {
+                    notes.push(dn[i].firstElementChild.innerText);
+                }
+            }
+
             return {
                 tournament: document.getElementById('tournament-name').value,
                 date: div.querySelector('.date').value,
                 time: div.querySelector('.time-utc').value,
                 data: d,
+                notes: notes,
                 type: 'outright'
             };
         }
@@ -304,14 +275,25 @@
                 }
             }
 
+            var notes = [];
+
+            var dn = document.getElementById('notes').childNodes;
+
+            for (i = 0; i < dn.length; i++) {
+                if (dn[i].firstElementChild) {
+                    notes.push(dn[i].firstElementChild.innerText);
+                }
+            }
+
             return {
                 tournament: document.getElementById('tournament-name').value,
                 data: d,
+                notes: notes,
                 type: 'h2h'
             };
         }
 
-        function createCSV(o) {
+        function generateCSV(o) {
             var csv = 'TOURNAMENT,DATE,TIME UTC,TYPE,TEAM,ODDS';
 
             csv += "\n\n" + o.tournament;
@@ -333,64 +315,6 @@
             return csv;
         }
 
-        function createPDF(o) {
-            var pdf = new jsPDF();
-
-            pdf.setFontSize(15);
-            pdf.setFontType('bold');
-
-            pdf.text(20, 30, 'TOURNAMENT');
-            pdf.text(65, 30, 'DATE');
-            pdf.text(88, 30, 'TIME');
-            pdf.text(105, 30, 'TYPE');
-            pdf.text(130, 30, 'TEAM');
-            pdf.text(165, 30, 'ODDS');
-
-            pdf.setFontSize(10);
-            pdf.text(90, 34, '(UTC)');
-
-            pdf.setFontSize(12);
-            pdf.setFontType('normal');
-
-            var y = 40;
-
-            var trm = o.tournament.split('-');
-
-            for (var it = 0; it < trm.length; it++) {
-                if (it == 0) {
-                    pdf.text(20, y + it * 10, pdf.splitTextToSize(trm[it].trim(), 55));
-                } else {
-                    pdf.text(20, y + it * 10, pdf.splitTextToSize(trm[it].trim(), 55));
-                }
-            }
-
-            if (o.date) {
-                pdf.text(65, y, o.date);
-                pdf.text(89, y, o.time);
-            }
-
-            for (var i = 0; i < o.data.length; i++) {
-                if (o.data[i].name) {
-                    pdf.text(105, y, 'Outright');
-                    pdf.text(130, y, o.data[i].name);
-                    pdf.text(165, y, o.data[i].odds);
-                } else if (o.data[i].name1) {
-                    pdf.text(65, y, o.data[i].date);
-                    pdf.text(89, y, o.data[i].time);
-                    pdf.text(105, y, 'H2H BO' + o.data[i].series);
-                    pdf.text(130, y, o.data[i].name1);
-                    pdf.text(165, y, o.data[i].odds1);
-                    y += 10;
-                    pdf.text(130, y, o.data[i].name2);
-                    pdf.text(165, y, o.data[i].odds2);
-                }
-
-                y += 15;
-            }
-
-            pdf.save(o.tournament == "" ? "matches" : o.tournament);
-        }
-
         function generatePDF(o) {
             var title = { size: 16, style: 'bold' },
                     listTitle = { size: 14, style: 'bold' },
@@ -402,8 +326,6 @@
             var pdf = new jsPDF('portrait', 'pt', 'a4');
             pdf.setFont(font.name, font.style);
 
-            var y = 80;
-
             function createH2H() {
                 var dateX = 50,
                         timeX = 125,
@@ -413,6 +335,8 @@
 
                 var matchSpacing = 25,
                         teamSpacing = 15;
+
+                var y = 80;
 
                 function writeTitle() {
                     pdf.setFontSize(listTitle.size);
@@ -470,6 +394,27 @@
                         writeTitle();
                     }
                 });
+
+                y = 80;
+
+                var notesX = 450;
+                var noteWidth = 200;
+                var noteSpace = 20;
+
+                pdf.setFontSize(listTitle.size);
+                pdf.setFontStyle(listTitle.style);
+
+                pdf.text('NOTES', notesX, y);
+
+                pdf.setFontSize(listItem.size);
+                pdf.setFontStyle(listItem.style);
+
+                o.notes.forEach(function(note) {
+                    y += noteSpace;
+                    var n = pdf.splitTextToSize(note, noteWidth);
+                    pdf.text(n, notesX, y);
+                    y += (n.length - 1) * listItem.size;
+                });
             }
 
             function createOutright() {
@@ -515,6 +460,27 @@
                         writeTitle();
                     }
                 });
+
+                y = 120;
+
+                var notesX = 330;
+                var noteWidth = 400;
+                var noteSpace = 20;
+
+                pdf.setFontSize(listTitle.size);
+                pdf.setFontStyle(listTitle.style);
+
+                pdf.text('NOTES', notesX, y);
+
+                pdf.setFontSize(listItem.size);
+                pdf.setFontStyle(listItem.style);
+
+                o.notes.forEach(function(note) {
+                    y += noteSpace;
+                    var n = pdf.splitTextToSize(note, noteWidth);
+                    pdf.text(n, notesX, y);
+                    y += (n.length - 1) * listItem.size;
+                });
             }
 
             pdf.setFontSize(title.size);
@@ -526,8 +492,6 @@
                 createH2H();
             } else if (o.type == 'outright') {
                 createOutright();
-            } else {
-                alert('No tournament type selected');
             }
 
             pdf.save(o.tournament);
@@ -601,7 +565,7 @@
 
             var regex = /[0-9]|\./;
 
-            if (!regex.test(key) || (key == '.' && field.value.indexOf('.') != -1) || (field.value.length > field.value.indexOf('.') + 2)) {
+            if (!(regex.test(key) || evt.charCode == 0) || (key == '.' && field.value.indexOf('.') != -1) || (field.value.length > field.value.indexOf('.') + 2)) {
                 evt.returnValue = false;
                 evt.preventDefault();
             }
@@ -626,7 +590,7 @@
 
             var regex = /[0-9]/;
 
-            if (!regex.test(key) || field.value.length == 5) {
+            if (!(regex.test(key) || evt.charCode == 0) || field.value.length == 5) {
                 evt.returnValue = false;
                 evt.preventDefault();
             } else {
@@ -643,7 +607,7 @@
 
             var regex = /[0-9]/;
 
-            if (!(regex.test(key)) || field.value.length == 10) {
+            if (!(regex.test(key) || evt.charCode == 0) || field.value.length == 10) {
                 evt.returnValue = false;
                 evt.preventDefault();
             } else {
