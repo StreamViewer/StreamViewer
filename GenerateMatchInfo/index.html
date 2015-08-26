@@ -343,9 +343,9 @@
 
             for (var it = 0; it < trm.length; it++) {
                 if (it == 0) {
-                    pdf.text(20, y + it * 10, pdf.splitTextToSize(trm[it], 55));
+                    pdf.text(20, y + it * 10, pdf.splitTextToSize(trm[it].trim(), 55));
                 } else {
-                    pdf.text(20, y + it * 10, "- " + trm[it]);
+                    pdf.text(20, y + it * 10, pdf.splitTextToSize(trm[it].trim(), 55));
                 }
             }
 
@@ -377,7 +377,7 @@
         }
 
         function generatePDF(object) {
-
+            const topStyle = {};
         }
 
         function addTeam() {
