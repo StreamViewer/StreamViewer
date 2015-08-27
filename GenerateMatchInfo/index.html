@@ -142,7 +142,7 @@
     <template id="add-series">
         <div class="series-info info-area">
             <input type="text" class="date medium-field" onkeypress="restrictDate(this, event)" onfocus="this.value=''" placeholder="Date DDMMYYYY" /><br />
-            <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'))" placeholder="Time (UTC) HHMM" />
+            <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'), this.parentElement.querySelector('.date'))" placeholder="Time (UTC) HHMM" />
             <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'), this.parentElement.querySelector('.date'))" placeholder="Time (local) HHMM" /><br />
             <label>Best of:</label>
             <input type="number" class="count medium-field" value="1" /><br />
@@ -179,7 +179,7 @@
         <div id="outright" class="bet-type outright">
             <div class="info-area">
                 <input type="text" class="date medium-field" onkeypress="restrictDate(this, event)" onfocus="this.value=''" placeholder="Date DDMMYYYY" />
-                <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'))" placeholder="Time (UTC) HHMM" />
+                <input type="text" class="time-utc medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateLocalTime(this.value, this.parentElement.querySelector('.time-local'), this.parentElement.querySelector('.date'))" placeholder="Time (UTC) HHMM" />
                 <input type="text" class="time-local medium-field" onkeypress="restrictTime(this, event)" onfocus="this.value=''" onchange="updateUTC(this.value, this.parentElement.querySelector('.time-utc'), this.parentElement.querySelector('.date'))" placeholder="Time (local) HHMM" />
             </div>
 
@@ -618,23 +618,63 @@
             }
         }
 
-        function updateLocalTime(value, time) {
-            var s = value.split(':');
+        function updateLocalTime(value, time, date) {
+            function updateTime(lt) {
+                if (lt[0] <= 24 && lt[0] > 0 && lt[1] < 60 && lt[1] >= 0) {
+                    var local = new Date();
+                    local = new Date(Date.UTC(local.getFullYear(), local.getMonth(), local.getDate(), parseInt(lt[0]) - 1, lt[1]));
 
-            var h = s[0];
-            var m = s[1];
+                    console.log((parseInt(lt[0]) - 1));
 
-            if (h && m && h <= 24 && h > 0 && m < 60) {
-                var local = new Date();
-                var utc = new Date(Date.UTC(local.getFullYear(), local.getMonth(), local.getDate(), h - 1, m));
+                    var hour = local.getHours() + 1;
+                    hour = hour < 10 ? '0' + hour : hour;
 
-                h = utc.getHours() + 1;
-                h = h < 10 ? '0' + h : h;
+                    var minute = local.getMinutes();
+                    minute = minute < 10 ? '0' + minute : minute;
 
-                m = utc.getMinutes();
-                m = m < 10 ? '0' + m : m;
+                    time.value = hour + ':' + minute;
+                }
+            }
 
-                time.value = h + ':' + m;
+            function updateDateTime(lt, ld) {
+                if (lt[0] <= 24 && lt[0] > 0 && lt[1] < 60 && lt[1] >= 0) {
+                    var local = new Date(Date.UTC(ld[2], parseInt(ld[1]) - 1, ld[0], parseInt(lt[0]) - 1, lt[1]));
+
+                    var day = local.getDate();
+                    day = day < 10 ? '0' + day : day;
+
+                    var month = local.getMonth() + 1;
+                    month = month < 10 ? '0' + month : month;
+
+                    var hour = local.getHours() + 1;
+                    hour = hour < 10 ? '0' + hour : hour;
+
+                    var minute = local.getMinutes();
+                    minute = minute < 10 ? '0' + minute : minute;
+
+                    time.value = hour + ':' + minute;
+                    date.value = day + '/' + month + '/' + local.getFullYear();
+                }
+            }
+
+            var t = '';
+            var d = '';
+
+            if (value && date.value) {
+                t = value.split(':');
+                d = date.value.split('/');
+
+                if (t.length == 2 && d.length == 3) {
+                    updateDateTime(t, d);
+                } else if (t.length == 2) {
+                    updateTime(t);
+                }
+            } else if (value) {
+                t = value.split(':');
+
+                if (t.length == 2) {
+                    updateTime(t);
+                }
             }
         }
 
