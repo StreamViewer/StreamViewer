@@ -73,6 +73,28 @@ hr {
     background: #909090;
 }
 
+.side-menu-menu {
+    position: fixed;
+    background-color: #282828;
+    border: solid 1px #404040;
+    border-left: none;
+    z-index: 2;
+    display: none;
+}
+
+.side-menu-menu input[type="radio"] {
+    display: none;
+}
+
+.side-menu-menu label {
+    display: inline-block;
+    background-color: #404040;
+    border: solid 1px #404040;
+    border-radius: 4px;
+    width: 60px;
+    height: 60px;
+}
+
 .big-button {
     background-color: #CC6322;
     border: solid 2px #CC6322;

@@ -24,18 +24,12 @@
         }
 
         #add-note {
-            position: fixed;
-            background-color: #282828;
-            border: solid 1px #404040;
-            border-left: none;
             top: 145px;
             left: 70px;
             height: 80px;
             width: 200px;
-            z-index: 2;
             text-align: center;
             line-height: 40px;
-            display: none;
         }
 
         #add-note input[type='text'] {
@@ -126,7 +120,7 @@
 </div>
 
 <!-- Pretty hacked together, maybe change this later -->
-<form id="add-note" onsubmit="addNote(this.querySelector('#note-text').value); this.querySelector('#note-text').value = ''; this.style.display = 'none'; return false">
+<form id="add-note" class="side-menu-menu" onsubmit="addNote(this.querySelector('#note-text').value); this.querySelector('#note-text').value = ''; this.style.display = 'none'; return false">
     <input id="note-text" class="medium-field" autocomplete="off" type="text" />
     <input class="medium-button" type="submit" value="Add Note" />
 </form>
@@ -373,7 +367,7 @@
                     pdf.text(item.time, timeX + 2, y);
                     pdf.text('H2H BO' + item.series, typeX, y);
 
-                    var name1 = pdf.splitTextToSize(item.name1, (oddsX - nameX) * 2);
+                    var name1 = pdf.splitTextToSize(item.name1, (oddsX - nameX) * 2 - 20);
                     if (item.id1) {
                         name1.push('ID: ' + item.id1);
                     }
@@ -384,7 +378,7 @@
 
                     y += (name1.length - 1) * listItem.size + teamSpacing;
 
-                    var name2 = pdf.splitTextToSize(item.name2, (oddsX - nameX) * 2);
+                    var name2 = pdf.splitTextToSize(item.name2, (oddsX - nameX) * 2 - 20);
                     if (item.id2) {
                         name2.push('ID: ' + item.id2);
                     }
@@ -453,7 +447,7 @@
                 o.data.forEach(function(item) {
                     y += teamSpacing;
 
-                    var name = pdf.splitTextToSize(item.name, (oddsX - nameX) * 2);
+                    var name = pdf.splitTextToSize(item.name, (oddsX - nameX) * 2 - 20);
                     if (item.id) {
                         name.push('ID: ' + item.id);
                     }
