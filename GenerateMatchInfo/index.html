@@ -64,21 +64,36 @@
         }
     </style>
     <script>
-        var app = {};
+        var app = { teams: [] };
 
         loadTeams();
 
         function loadTeams() {
             var req = new XMLHttpRequest();
 
+            (function() {
+                var teams = getCookie('teams');
+
+                if (teams) {
+                    teams.forEach(function (t) {
+                        app.teams.push(t);
+                    });
+                }
+            })();
+
             req.onreadystatechange = function(res) {
                 if (req.readyState == 4) {
                     if (req.status == 200) {
-                        app.teams = JSON.parse(req.responseText);
+                        var teams = JSON.parse(req.responseText);
 
                         var d = document.getElementById('team-list');
 
-                        app.teams.forEach(function(t) {
+                        teams.forEach(function(t) {
+                            app.teams.push({
+                                id: t.sid,
+                                name: t.name
+                            });
+
                             var o = document.createElement('option');
                             o.value = t.name;
                             d.appendChild(o);
@@ -186,13 +201,9 @@
     </div>
     <script>
         function isNewTeam(name) {
-            var o = document.getElementById('team-list').options;
-
-            var i = o.length;
+            var i = app.teams.length;
             while (i--) {
-                console.log(o[i].value);
-
-                if (o[i].value === name) {
+                if (app.teams[i].name == name) {
                     return false;
                 }
             }
@@ -370,6 +381,11 @@
                     var name1 = pdf.splitTextToSize(item.name1, (oddsX - nameX) * 2 - 20);
                     if (item.id1) {
                         name1.push('ID: ' + item.id1);
+                    } else {
+                        app.teams.push({
+                            name: item.name1,
+                            id: item.id1
+                        });
                     }
 
                     pdf.text(name1, nameX, y);
@@ -381,6 +397,11 @@
                     var name2 = pdf.splitTextToSize(item.name2, (oddsX - nameX) * 2 - 20);
                     if (item.id2) {
                         name2.push('ID: ' + item.id2);
+                    } else {
+                        app.teams.push({
+                            name: item.name2,
+                            id: item.id2
+                        });
                     }
 
                     pdf.text(name2, nameX, y);
@@ -450,6 +471,11 @@
                     var name = pdf.splitTextToSize(item.name, (oddsX - nameX) * 2 - 20);
                     if (item.id) {
                         name.push('ID: ' + item.id);
+                    } else {
+                        app.teams.push({
+                            name: item.name,
+                            id: item.id
+                        })
                     }
 
                     pdf.text(name, nameX, y);
