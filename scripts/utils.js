@@ -1,8 +1,9 @@
+// expire is in milliseconds
 function setCookie(name, value, expire) {
     var d = new Date();
     d.setTime(d.getTime() + expire);
 
-    document.cookie = name + '=' + value + ';' + 'expires=' + d.toUTCString();
+    document.cookie = name + '=' + value + '; expires=' + d.toUTCString();
 }
 
 function getCookie(name) {
