@@ -17,3 +17,25 @@ function getCookie(name) {
         }
     }
 }
+
+var utils = new (function() {
+    this.get = function(selector) {
+
+    };
+
+    this.set = function(selector, attribute, value) {
+        var attrs = attribute.split('.');
+
+        document.querySelectorAll(selector).forEach(function(e) {
+            var c = e;
+
+            for (var i = 0, length = attrs.length; i < length - 1; i++) {
+                c = c[attrs[i]];
+            }
+
+            c[attrs[i]] = value;
+        });
+    };
+
+
+})();
