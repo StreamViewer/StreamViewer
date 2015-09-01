@@ -119,6 +119,11 @@
             req.send();
         }
     </script>
+    <script>
+        document.onload = function() {
+            changeBetType();
+        }
+    </script>
 </head>
 <body>
 <div id="side-menu">
@@ -331,6 +336,8 @@
 
             var font = { name: 'helvetica', style: 'normal' };
 
+            var y = 50;
+
             var pdf = new jsPDF('portrait', 'pt', 'a4');
             pdf.setFont(font.name, font.style);
 
@@ -344,7 +351,7 @@
                 var matchSpacing = 30,
                         teamSpacing = 20;
 
-                var y = 80;
+                y += 30;
 
                 function writeTitle() {
                     pdf.setFontSize(listTitle.size);
@@ -417,7 +424,7 @@
                     }
                 });
 
-                y = 80;
+                y = 50;
 
                 var notesX = 450;
                 var noteWidth = 200;
@@ -448,9 +455,11 @@
                 pdf.setFontSize(listItem.size);
                 pdf.setFontStyle(listItem.style);
 
-                pdf.text('Bet Type: Outright\nStarts: ' + o.date + ' ' + o.time + ' UTC', 50, 70);
+                y += 30;
 
-                var y = 120;
+                pdf.text('Bet Type: Outright\nStarts: ' + o.date + ' ' + o.time + ' UTC', 50, y);
+
+                y += 40;
 
                 function writeTitle() {
                     pdf.setFontSize(listTitle.size);
@@ -490,7 +499,7 @@
                     }
                 });
 
-                y = 120;
+                y = 50;
 
                 var notesX = 330;
                 var noteWidth = 400;
@@ -515,7 +524,11 @@
             pdf.setFontSize(title.size);
             pdf.setFontStyle(title.style);
 
-            pdf.text(o.tournament, 50, 50);
+            var titles = pdf.splitTextToSize(o.tournament, 700);
+
+            pdf.text(titles, 50, 50);
+
+            y += (titles.length - 1) * title.size;
 
             if (o.type == 'h2h') {
                 createH2H();

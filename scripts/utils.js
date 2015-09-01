@@ -12,7 +12,7 @@ function getCookie(name) {
     var i = ca.length;
     while (i--) {
         var c = ca[i].trim();
-        if (c.trim.indexOf(name) == 0) {
+        if (c.trim().indexOf(name) == 0) {
             return c.substring(name.length + 1, c.length);
         }
     }
